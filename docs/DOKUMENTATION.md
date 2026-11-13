@@ -6,7 +6,7 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
 
 ![Vorschau der Anzeige in 1920×1080](vorschau.png)
 
-*Vorschau in 1920×1080. Die Termine stammen hier aus einem Testzeitraum; im Betrieb zeigt die Karte die kommenden Termine.*
+*Vorschau in 1920×1080 (13. November 2026) mit Terminen aus easyVerein.*
 
 ---
 
@@ -184,13 +184,19 @@ Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger),
 Die Termine kommen aus dem Vereinskalender in **easyVerein** (Abo-Adresse „Kalender abonnieren“ im öffentlichen Kalender, nach Anmeldung sichtbar).
 
 **Abgleich** (`tools/easyverein.py`, ausgeführt von der GitHub Action `.github/workflows/termine.yml`):
-1. Die Action läuft alle 30 Minuten (GitHub startet zeitgesteuerte Läufe oft einige Minuten später), außerdem von Hand unter **Actions → Termine aus easyVerein → Run workflow**.
+1. Die Action läuft alle 30 Minuten, jeweils zur 7. und 37. Minute (GitHub startet zeitgesteuerte Läufe oft einige Minuten später). Außerdem läuft sie nach Änderungen am Skript oder Workflow und von Hand unter **Actions → Termine aus easyVerein → Run workflow**.
 2. Sie lädt die ICS-Datei. Die Adresse steht im Repository-Secret **`EASYVEREIN_ICS`** und nie im Code.
 3. Übernommen werden nur **Titel, Beginn, Ende und Kalendername**. Beschreibungen werden bewusst verworfen, denn sie enthalten Telefonnummern, E-Mail-Adressen und Kontodaten. `events.json` ist öffentlich lesbar.
 4. Buchungen derselben Veranstaltung (z. B. „Midwinter“ im Kalender *Bus* und „Midwinter (mittlerer Hänger)“ im Kalender *Anhänger mittel*) werden zu **einem** Termin zusammengefasst. Bus, Hänger und Clubraum erscheinen dann als Hinweis: „Fr · bis 20. Dez · Bus · Hänger mittel“.
 5. Der Kalender *Vorstand* wird nicht übernommen.
 6. Termine, die easyVerein als 00:00 UTC bis 23:59 speichert, werden als ganztägig gezeigt.
 7. Nur wenn sich etwas geändert hat, committet die Action eine neue `events.json`; GitHub Pages veröffentlicht sie danach.
+8. GitHub pausiert zeitgesteuerte Workflows nach 60 Tagen ohne Commits. Die Action schaltet sich deshalb bei jedem geplanten Lauf selbst wieder ein (`gh api … /enable`), ohne dafür Commits zu erzeugen.
+9. Fehlt das Secret, endet der Lauf mit der Warnung „Secret EASYVEREIN_ICS fehlt“ und ändert nichts.
+
+Von Hand ausführen (z. B. zum Testen): `EASYVEREIN_ICS='<Abo-Adresse>' python3 tools/easyverein.py events.json`. Das Skript braucht nur Python 3.9 oder neuer, keine Zusatzpakete.
+
+**Abruf durch die Seite:** `index.html` lädt die Termine immer von der festen Adresse `https://schulze9.github.io/orvo-anzeige/events.json` (Einstellung `eventsUrl`). GitHub Pages erlaubt den Abruf von jeder Seite aus (CORS). Deshalb funktioniert dieselbe `index.html` auch als lokale Datei oder auf orvo.de.
 
 **Anzeige:**
 - Gezeigt werden die nächsten **120 Tage**, höchstens 6 Termine, und nur so viele, wie vollständig in die Karte passen.
@@ -243,9 +249,10 @@ Pegelonline-Basisadresse: `https://www.pegelonline.wsv.de/webservices/rest-api/v
 |---|---|---|
 | `lat`, `lon` | 53.1375, 8.2240 | Standort für Wetter und Sonnenzeiten |
 | `site` | `https://orvo.de` | WordPress-Seite für die Bilder |
+| `eventsUrl` | `https://schulze9.github.io/orvo-anzeige/events.json` | Woher die Termine geladen werden |
 | `posts` | 10 | Anzahl der Beiträge für die Bilderstrecke |
 | `imagesPerPost` | 6 | Höchstzahl Bilder pro Beitrag |
-| `eventDays` | 120 | Wie viele Tage im Voraus Termine geladen werden |
+| `eventDays` | 120 | Wie viele Tage im Voraus Termine angezeigt werden |
 | `maxEvents` | 6 | Höchstzahl geladener Termine |
 | `waterTempStation` | Elsfleth | Pegelonline-Messstelle für die Wassertemperatur |
 | `levelStation` | Oldenburg-Drielake | Pegelonline-Messstelle für den Pegel |
@@ -307,7 +314,7 @@ Die Seite kann jederzeit auf den Webspace von orvo.de umziehen:
 
 Vorteil: Die Bilder kommen dann von derselben Adresse wie die Seite selbst.
 
-**Termine nach dem Umzug:** `events.json` wird weiter von der GitHub Action erzeugt. In `index.html` dann `getJSON("events.json…")` auf `https://schulze9.github.io/orvo-anzeige/events.json` ändern (GitHub Pages erlaubt den Abruf von fremden Seiten). Alternativ das Skript als Cronjob beim Hoster laufen lassen.
+**Termine nach dem Umzug:** Es ist keine Änderung nötig. `index.html` lädt die Termine schon von der GitHub-Adresse (`eventsUrl`), und die Action erzeugt `events.json` weiter. Dafür muss das GitHub-Repository **öffentlich** bleiben. Soll GitHub ganz entfallen, `tools/easyverein.py` als Cronjob beim Hoster laufen lassen und `eventsUrl` auf die dort erzeugte Datei setzen.
 
 ---
 
@@ -341,6 +348,12 @@ Yodeck nutzt nur einen HDMI-Ausgang des Pi. Mit dem Splitter zeigen Fernseher un
 **Warum eine eigene Anzeigeseite statt Yodeck-Layouts?**
 Termine, Bilder, Wasserdaten und Dämmerungszeiten kommen automatisch aus vorhandenen Quellen. Niemand muss Inhalte doppelt pflegen.
 
+**Warum easyVerein über eine GitHub Action?**
+Die Termine werden im Verein in easyVerein gepflegt. easyVerein bietet dafür ein ICS-Abo, aber ohne CORS, und die Adresse enthält einen geheimen Schlüssel. Ein Browser kann die Datei deshalb nicht direkt laden, und die Adresse darf nicht in die öffentliche Seite. Die Action hält den Schlüssel als Secret geheim und veröffentlicht nur die nötigen Angaben. Der öffentliche easyVerein-Kalender (`easyverein.com/public/ORVO/calendar`) war keine Alternative: Ohne Anmeldung zeigt er keine Termine.
+
+**Warum ist das Repository öffentlich?**
+GitHub Pages funktioniert mit einem kostenlosen GitHub-Konto nur für öffentliche Repositorys. Wird das Repository privat, sind die Anzeigeseite und `events.json` nicht mehr erreichbar. Das Repository enthält keine Zugangsdaten: Die easyVerein-Adresse liegt nur als Secret vor, WLAN- und Yodeck-Passwörter stehen nirgends. Öffentlich sind Code, Dokumentation und die Termintitel mit Datum. Entscheidung am 13. November 2026: öffentlich lassen.
+
 **Warum bürgerliche Dämmerung?**
 Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese Zeiten hervorgehoben.
 
@@ -353,3 +366,11 @@ Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese
 - [ ] Seite auf orvo.de umziehen (optional, siehe [Abschnitt 9](#9-umzug-der-seite-auf-orvode)).
 - [ ] Im Vereinsnetz eine feste IP-Adresse für den Pi vergeben (erleichtert SSH).
 - [ ] Optional: Eilmeldungs-Zeile für kurzfristige Hinweise (z. B. „Training fällt aus“).
+- [ ] Beim ersten Lauf, der neue Termine committet, prüfen, ob GitHub Pages `events.json` danach neu veröffentlicht.
+- [ ] Passwort des easyVerein-Zugangs ändern (es stand im Chat). Die Abo-Adresse bleibt davon unberührt.
+- [ ] Klären, ob die Kalender *Vereinstermine*, *Regatten* und *Trainingszeiten* im Abo enthalten sind. Derzeit liefert das Abo nur Bus, Anhänger, Clubraum und Wanderfahrten.
+
+Erledigt:
+- [x] Termine aus easyVerein statt aus dem Kalender auf orvo.de (13. November 2026).
+- [x] Secret `EASYVEREIN_ICS` hinterlegt, Action getestet (7 Termine übernommen).
+- [x] Ortsangabe der Wassertemperatur auf „Oldenburg“ geändert.
