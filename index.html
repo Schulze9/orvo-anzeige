@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORVO Eingangsanzeige</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1730; --panel:#12223f; --panel2:#172b4f; --line:#24406e;
+  --text:#f3f6fb; --muted:#9fb0cc; --blue:#4f86e8; --logo:#2c55b0;
+  --red:#cc253f; --gold:#ffc65c; --water:#4fc3e8;
+  --r:1.1vw; --gap:1.1vw;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);overflow:hidden}
+body{font-family:"Exo 2",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1vw;line-height:1.25;
+  display:grid;grid-template-rows:auto 1fr;gap:var(--gap);padding:var(--gap)}
+
+/* Kopfzeile */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 .4vw}
+.brand{display:flex;align-items:center;gap:1.2vw}
+.brand .mark{font-weight:800;font-size:3.4vw;letter-spacing:.05em;line-height:1;color:#fff}
+.brand .mark span{display:block;height:.35vw;background:var(--red);margin-top:.35vw;border-radius:.2vw}
+.brand .name{font-weight:600;font-size:1.25vw;line-height:1.15;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.clock{text-align:right}
+.clock .time{font-weight:700;font-size:3.4vw;line-height:1;font-variant-numeric:tabular-nums}
+.clock .date{font-size:1.3vw;color:var(--muted);margin-top:.3vw}
+
+main{display:grid;grid-template-columns:61.5fr 38.5fr;gap:var(--gap);min-height:0}
+
+/* Bilderstrecke */
+.photos{position:relative;border-radius:var(--r);overflow:hidden;background:#000}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease}
+.slide.on{opacity:1}
+.slide .blur{position:absolute;inset:-4%;background-size:cover;background-position:center;filter:blur(30px) brightness(.45);transform:scale(1.05)}
+.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.slide.cover img{object-fit:cover}
+.caption{position:absolute;left:0;right:0;bottom:0;padding:5vw 2vw 1.6vw;
+  background:linear-gradient(transparent,rgba(5,12,28,.88));z-index:2}
+.caption .kicker{font-size:1.05vw;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.08em}
+.caption .title{font-size:2.3vw;font-weight:700;line-height:1.1;margin-top:.3vw;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.progress{position:absolute;left:0;bottom:0;height:.3vw;background:var(--red);z-index:3;width:0}
+.photos .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:1.6vw}
+
+/* rechte Spalte */
+aside{display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:var(--gap);min-height:0;overflow:hidden}
+.card{background:var(--panel);border-radius:var(--r);padding:1.2vw 1.4vw;min-height:0}
+.card h2{font-size:1vw;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.6vw;display:flex;justify-content:space-between;align-items:baseline}
+.card h2 small{font-size:.85vw;letter-spacing:.04em;text-transform:none;font-weight:500;opacity:.8}
+.row2{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--gap)}
+
+.wx{display:flex;align-items:center;gap:1vw}
+.wx svg{width:4.2vw;height:4.2vw;flex:none}
+.big{font-size:3.7vw;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.big sup{font-size:.45em;vertical-align:.9em;margin-left:.1em;font-weight:600}
+.desc{font-size:1.15vw;color:var(--muted);margin-top:.25vw}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:.35vw 1vw;margin-top:.7vw;font-size:1.1vw}
+.facts b{font-weight:700;font-variant-numeric:tabular-nums}
+.facts span{color:var(--muted)}
+.arrow{display:inline-block;width:1vw;height:1vw;vertical-align:-.12vw}
+
+.water .big{color:var(--water)}
+.water .facts{grid-template-columns:1fr}
+
+/* Sonne / Ruderzeit */
+.sun .times{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;margin-top:.6vw}
+.sun .times div span{display:block;font-size:.95vw;color:var(--muted)}
+.sun .times div b{font-size:1.75vw;font-weight:700;font-variant-numeric:tabular-nums}
+.sun .times .civil b{color:var(--gold)}
+.bar{position:relative;height:1.1vw;border-radius:.6vw;background:#0a1328;overflow:hidden;margin-top:.2vw}
+.bar .tw{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#3a3f6e,#e7a74b 50%,#3a3f6e)}
+.bar .day{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#f0b54e,#ffe08a 50%,#f0b54e)}
+.bar .now{position:absolute;top:-.2vw;bottom:-.2vw;width:.3vw;background:#fff;border-radius:.2vw;box-shadow:0 0 .5vw #fff}
+.state{font-size:.95vw;font-weight:700;padding:.15vw .7vw;border-radius:1vw;letter-spacing:.04em}
+.state.ok{background:rgba(129,215,66,.18);color:#a6e57a}
+.state.no{background:rgba(204,37,63,.22);color:#ff8597}
+
+/* Termine */
+.events{display:flex;flex-direction:column;overflow:hidden}
+.ev{flex:none;display:grid;grid-template-columns:4.2vw 1fr;gap:1vw;align-items:center;padding:.5vw 0;border-top:1px solid var(--line)}
+.ev:first-of-type{border-top:0}
+.ev .d{text-align:center;background:var(--panel2);border-radius:.6vw;padding:.25vw 0;border-top:.3vw solid var(--blue)}
+.ev .d .day{font-size:1.6vw;font-weight:800;line-height:1}
+.ev .d .mon{font-size:.9vw;text-transform:uppercase;color:var(--muted);letter-spacing:.08em}
+.ev .t{font-size:1.3vw;font-weight:600;line-height:1.15;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ev .m{font-size:1vw;color:var(--muted);margin-top:.15vw}
+.ev .m .badge{display:inline-block;padding:0 .5vw;border-radius:.8vw;font-weight:700;margin-right:.4vw;color:#fff;background:var(--red)}
+.events .none{color:var(--muted);font-size:1.3vw;padding:.6vw 0}
+.events .none b{display:block;color:var(--text);font-size:1.5vw;margin-bottom:.3vw}
+
+.stale{opacity:.55}
+.foot{position:fixed;right:1.2vw;bottom:.25vw;font-size:.7vw;color:#5d7090}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark">ORVO<span></span></div>
+    <div class="name">Oldenburger<br>Ruderverein</div>
+  </div>
+  <div class="clock"><div class="time" id="time">--:--</div><div class="date" id="date"></div></div>
+</header>
+
+<main>
+  <section class="photos" id="photos"><div class="empty">Bilder werden geladen …</div></section>
+
+  <aside>
+    <div class="row2">
+      <div class="card" id="weather">
+        <h2>Wetter <small>Oldenburg</small></h2>
+        <div class="wx"><div id="wxIcon"></div><div><div class="big" id="wxTemp">–</div><div class="desc" id="wxDesc"></div></div></div>
+        <div class="facts" id="wxFacts"></div>
+      </div>
+      <div class="card water" id="water">
+        <h2>Wasser</h2>
+        <div class="big" id="wtTemp">–</div>
+        <div class="desc" id="wtWhere">Weser · Elsfleth</div>
+        <div class="facts" id="wtFacts"></div>
+      </div>
+    </div>
+
+    <div class="card sun" id="sun">
+      <h2><span>Ruderzeit heute <small>· bürgerliche Dämmerung</small></span><span class="state" id="rowState"></span></h2>
+      <div class="bar" id="bar"></div>
+      <div class="times">
+        <div class="civil"><span>Dämmerung</span><b id="t1">–</b></div>
+        <div><span>Sonnenaufgang</span><b id="t2">–</b></div>
+        <div><span>Sonnenuntergang</span><b id="t3">–</b></div>
+        <div class="civil"><span>Dämmerung</span><b id="t4">–</b></div>
+      </div>
+    </div>
+
+    <div class="card events" id="events"><h2>Termine</h2><div class="none">Termine werden geladen …</div></div>
+  </aside>
+</main>
+<div class="foot" id="foot"></div>
+
+<script>
+/* ===== Einstellungen ===== */
+const CFG = {
+  lat: 53.1375, lon: 8.2240,              // Oldenburg, an der Hunte
+  site: "https://orvo.de",
+  slideSeconds: +(new URLSearchParams(location.search).get("slide") || 9),
+  posts: 10,                              // so viele Beiträge für die Bilderstrecke
+  imagesPerPost: 6,
+  eventDays: 120,                         // Termine so weit im Voraus
+  maxEvents: 6,
+  waterTempStation: "eba772d4-509e-4fe7-ba51-d9a29b190432", // Weser, Elsfleth (Wassertemperatur)
+  levelStation: "1b51e55e-088a-44c3-a633-b1bee44422d7",     // Hunte, Oldenburg-Drielake (Pegel)
+  refreshMinutes: 15,
+  reloadHours: 6
+};
+
+/* ===== Hilfen ===== */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const hm = d => d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "–";
+const WD = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const MON = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+const MONL = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const decode = s => { const t = document.createElement("textarea"); t.innerHTML = s || ""; return t.value; };
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem("orvo." + k)); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem("orvo." + k, JSON.stringify(v)); } catch(e){} }
+};
+async function getJSON(url){
+  const r = await fetch(url, {cache: "no-store"});
+  if (!r.ok) throw new Error(r.status + " " + url);
+  return r.json();
+}
+/* lädt frisch, fällt sonst auf den letzten gespeicherten Stand zurück */
+async function cached(key, loader, render, el){
+  try { const v = await loader(); store.set(key, {t: Date.now(), v}); render(v); el && el.classList.remove("stale"); }
+  catch(e){ console.warn(key, e); const c = store.get(key); if (c) { render(c.v); el && el.classList.add("stale"); } }
+}
+
+/* ===== Uhr ===== */
+function tick(){
+  const n = new Date();
+  $("time").textContent = hm(n);
+  $("date").textContent = WD[n.getDay()] + ", " + n.getDate() + ". " + MONL[n.getMonth()] + " " + n.getFullYear();
+}
+
+/* ===== Sonne: Aufgang/Untergang und bürgerliche Dämmerung (NOAA-Verfahren, Sonnenstand -0,833° bzw. -6°) ===== */
+function sunTimes(date, lat, lon){
+  const rad = Math.PI / 180;
+  // NOAA-Sonnenstand: Deklination und Zeitgleichung zum Zeitpunkt t (ms)
+  const solar = t => {
+    const T = ((t / 864e5 + 2440587.5) - 2451545) / 36525;
+    const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360;
+    const M = 357.52911 + T * (35999.05029 - 0.0001537 * T);
+    const e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
+    const C = Math.sin(M * rad) * (1.914602 - T * (0.004817 + 0.000014 * T)) + Math.sin(2 * M * rad) * (0.019993 - 0.000101 * T) + Math.sin(3 * M * rad) * 0.000289;
+    const om = 125.04 - 1934.136 * T;
+    const lambda = L0 + C - 0.00569 - 0.00478 * Math.sin(om * rad);
+    const eps = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60 + 0.00256 * Math.cos(om * rad);
+    const decl = Math.asin(Math.sin(eps * rad) * Math.sin(lambda * rad));
+    const y = Math.tan(eps / 2 * rad) ** 2;
+    const eot = 4 / rad * (y * Math.sin(2 * L0 * rad) - 2 * e * Math.sin(M * rad) + 4 * e * y * Math.sin(M * rad) * Math.cos(2 * L0 * rad)
+      - 0.5 * y * y * Math.sin(4 * L0 * rad) - 1.25 * e * e * Math.sin(2 * M * rad));   // Minuten
+    return {decl, eot};
+  };
+  const day0 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());   // 00:00 UTC
+  const event = (h, rising) => {
+    let t = day0 + 12 * 36e5;
+    for (let i = 0; i < 4; i++) {
+      const {decl, eot} = solar(t);
+      const cosw = (Math.sin(h * rad) - Math.sin(lat * rad) * Math.sin(decl)) / (Math.cos(lat * rad) * Math.cos(decl));
+      if (cosw < -1 || cosw > 1) return null;
+      const w = Math.acos(cosw) / rad;
+      const minutes = 720 - 4 * lon - eot + (rising ? -4 * w : 4 * w);   // Minuten nach 00:00 UTC
+      t = day0 + minutes * 6e4;
+    }
+    return new Date(t);
+  };
+  return {dawn: event(-6, true), rise: event(-0.833, true), set: event(-0.833, false), dusk: event(-6, false)};
+}
+function renderSun(){
+  const now = new Date(), s = sunTimes(now, CFG.lat, CFG.lon);
+  $("t1").textContent = hm(s.dawn); $("t2").textContent = hm(s.rise);
+  $("t3").textContent = hm(s.set);  $("t4").textContent = hm(s.dusk);
+  const ok = now >= s.dawn && now <= s.dusk;
+  const st = $("rowState"); st.className = "state " + (ok ? "ok" : "no");
+  st.textContent = ok ? "jetzt hell genug" : (now < s.dawn ? "noch dunkel" : "schon dunkel");
+  // Balken über den Tag (00–24 Uhr)
+  const day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const p = d => ((d.getTime() - day0) / 864e5 * 100).toFixed(2) + "%";
+  const w = (a, b) => ((b - a) / 864e5 * 100).toFixed(2) + "%";
+  $("bar").innerHTML =
+    `<div class="tw" style="left:${p(s.dawn)};width:${w(s.dawn, s.dusk)}"></div>` +
+    `<div class="day" style="left:${p(s.rise)};width:${w(s.rise, s.set)}"></div>` +
+    `<div class="now" style="left:calc(${p(now)} - .15vw)"></div>`;
+}
+
+/* ===== Wetter (Open-Meteo) ===== */
+const WMO = c =>
+  c === 0 ? ["sun","klar"] : c === 1 ? ["sun","überwiegend klar"] : c === 2 ? ["part","teils bewölkt"] :
+  c === 3 ? ["cloud","bedeckt"] : c <= 48 ? ["fog","Nebel"] : c <= 57 ? ["rain","Nieselregen"] :
+  c <= 67 ? ["rain","Regen"] : c <= 77 ? ["snow","Schnee"] : c <= 82 ? ["rain","Regenschauer"] :
+  c <= 86 ? ["snow","Schneeschauer"] : ["storm","Gewitter"];
+function icon(kind, night){
+  const sun = night
+    ? '<path d="M30 10a14 14 0 1 0 12 21A16 16 0 0 1 30 10z" fill="#cfd8f0"/>'
+    : '<circle cx="24" cy="24" r="9" fill="#ffc65c"/><g stroke="#ffc65c" stroke-width="3" stroke-linecap="round">' +
+      [0,45,90,135,180,225,270,315].map(a => { const r = a * Math.PI / 180;
+        return `<line x1="${24+14*Math.cos(r)}" y1="${24+14*Math.sin(r)}" x2="${24+19*Math.cos(r)}" y2="${24+19*Math.sin(r)}"/>`; }).join("") + '</g>';
+  const cloud = (x, y, f) => `<path transform="translate(${x} ${y})" d="M14 34h24a9 9 0 0 0 0-18 12 12 0 0 0-23-2A10 10 0 0 0 14 34z" fill="${f}"/>`;
+  const drops = '<g stroke="#4fc3e8" stroke-width="3" stroke-linecap="round"><line x1="20" y1="44" x2="17" y2="51"/><line x1="29" y1="44" x2="26" y2="51"/><line x1="38" y1="44" x2="35" y2="51"/></g>';
+  const flakes = '<g fill="#fff"><circle cx="19" cy="47" r="2.2"/><circle cx="28" cy="50" r="2.2"/><circle cx="37" cy="47" r="2.2"/></g>';
+  const body = {
+    sun: sun,
+    part: `<g transform="translate(-6 -6)">${sun}</g>` + cloud(4, 10, "#dfe6f3"),
+    cloud: cloud(-2, 2, "#b9c6dc") + cloud(4, 8, "#dfe6f3"),
+    fog: cloud(2, -2, "#b9c6dc") + '<g stroke="#9fb0cc" stroke-width="3" stroke-linecap="round"><line x1="10" y1="42" x2="50" y2="42"/><line x1="14" y1="49" x2="46" y2="49"/></g>',
+    rain: cloud(2, -2, "#dfe6f3") + drops,
+    snow: cloud(2, -2, "#dfe6f3") + flakes,
+    storm: cloud(2, -2, "#b9c6dc") + '<path d="M30 36l-7 10h6l-4 9 10-12h-6l4-7z" fill="#ffc65c"/>'
+  }[kind];
+  return `<svg viewBox="0 0 56 56">${body}</svg>`;
+}
+const DIRS = ["N","NO","O","SO","S","SW","W","NW"];
+const beaufort = k => [1,6,12,20,29,39,50,62,75,89,103,118].findIndex(x => k < x) === -1 ? 12 : [1,6,12,20,29,39,50,62,75,89,103,118].findIndex(x => k < x);
+function renderWeather(d){
+  const c = d.current, day = d.daily;
+  const [kind, text] = WMO(c.weather_code);
+  $("wxIcon").innerHTML = icon(kind, !c.is_day);
+  $("wxTemp").innerHTML = Math.round(c.temperature_2m) + "<sup>°C</sup>";
+  $("wxDesc").textContent = text + " · gefühlt " + Math.round(c.apparent_temperature) + "°";
+  const dir = DIRS[Math.round(c.wind_direction_10m / 45) % 8];
+  const arrow = `<svg class="arrow" viewBox="0 0 10 10" style="transform:rotate(${c.wind_direction_10m + 180}deg)"><path d="M5 0l4 9-4-2-4 2z" fill="#9fb0cc"/></svg>`;
+  $("wxFacts").innerHTML =
+    `<div><span>Wind</span> <b>${beaufort(c.wind_speed_10m)} Bft</b> ${arrow} ${dir}</div>` +
+    `<div><span>Böen</span> <b>${Math.round(c.wind_gusts_10m)} km/h</b></div>` +
+    `<div><span>Heute</span> <b>${Math.round(day.temperature_2m_min[0])}° / ${Math.round(day.temperature_2m_max[0])}°</b></div>` +
+    `<div><span>Regen</span> <b>${day.precipitation_probability_max[0] ?? "–"} %</b></div>`;
+}
+const loadWeather = () => getJSON("https://api.open-meteo.com/v1/forecast?latitude=" + CFG.lat + "&longitude=" + CFG.lon +
+  "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m" +
+  "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=1&timezone=Europe%2FBerlin");
+
+/* ===== Wasser (Pegelonline) ===== */
+const PO = "https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/";
+async function loadWater(){
+  const [wt, lv] = await Promise.all([
+    getJSON(PO + CFG.waterTempStation + "/WT/currentmeasurement.json"),
+    getJSON(PO + CFG.levelStation + "/W/measurements.json?start=PT2H").catch(() => null)
+  ]);
+  return {wt, lv};
+}
+function renderWater(d){
+  $("wtTemp").innerHTML = d.wt.value.toFixed(1).replace(".", ",") + "<sup>°C</sup>";
+  const age = (Date.now() - new Date(d.wt.timestamp)) / 36e5;
+  let html = `<div><span>gemessen</span> <b>${hm(new Date(d.wt.timestamp))} Uhr</b>${age > 6 ? " (alt)" : ""}</div>`;
+  if (d.lv && d.lv.length > 1) {
+    const last = d.lv[d.lv.length - 1].value, prev = d.lv[0].value, diff = last - prev;
+    const tr = Math.abs(diff) < 3 ? "→" : diff > 0 ? "↑" : "↓";
+    html += `<div><span>Hunte-Pegel</span> <b>${Math.round(last)} cm</b> ${tr}</div>`;
+  }
+  $("wtFacts").innerHTML = html;
+}
+
+/* ===== Termine (My Calendar auf orvo.de) ===== */
+async function loadEvents(){
+  const qf = new URLSearchParams(location.search).get("from");   // nur zum Testen
+  const from = qf ? new Date(qf) : new Date(), to = new Date(Date.now() + CFG.eventDays * 864e5);
+  const d = await getJSON(CFG.site + "/wp-json/my-calendar/v1/events?from=" + ymd(from) + "&to=" + ymd(to));
+  const list = Array.isArray(d) ? d : Object.values(d).flat();
+  const seen = new Set(), out = [];
+  for (const e of list) {
+    if (!e || seen.has(e.occur_id)) continue; seen.add(e.occur_id);
+    out.push({title: decode(e.event_title), begin: e.occur_begin, end: e.occur_end,
+              time: e.event_time, endtime: e.event_endtime, cat: decode(e.category_name || ""), color: e.category_color || ""});
+  }
+  out.sort((a, b) => a.begin.localeCompare(b.begin));
+  return out.filter(e => e.end.slice(0, 10) >= ymd(from)).slice(0, CFG.maxEvents);
+}
+function renderEvents(list){
+  const box = $("events");
+  if (!list.length) {
+    box.innerHTML = '<h2>Termine</h2><div class="none"><b>Gerade keine Termine eingetragen</b>Neue Termine erscheinen hier automatisch, sobald sie im Kalender auf orvo.de stehen.</div>';
+    return;
+  }
+  const today = ymd(new Date()), tomorrow = ymd(new Date(Date.now() + 864e5));
+  box.innerHTML = "<h2>Termine</h2>" + list.map(e => {
+    const b = new Date(e.begin.replace(" ", "T")), en = new Date(e.end.replace(" ", "T"));
+    const multi = ymd(b) !== ymd(en);
+    const allDay = e.time === "00:00:00" && (e.endtime === "23:59:59" || e.endtime === "00:00:00");
+    let when = multi ? "bis " + en.getDate() + ". " + MON[en.getMonth()] : allDay ? "ganztägig" : hm(b) + " Uhr";
+    let badge = e.begin.slice(0, 10) <= today ? "Heute" : e.begin.slice(0, 10) === tomorrow ? "Morgen" : "";
+    if (multi && e.begin.slice(0, 10) < today) badge = "Läuft";
+    const col = /^#[0-9a-f]{3,8}$/i.test(e.color) ? e.color : "var(--blue)";
+    return `<div class="ev"><div class="d" style="border-top-color:${col}"><div class="day">${b.getDate()}</div><div class="mon">${MON[b.getMonth()]}</div></div>` +
+      `<div><div class="t"></div><div class="m">${badge ? `<span class="badge">${badge}</span>` : ""}${WD[b.getDay()].slice(0, 2)} · ${when}${e.cat && e.cat !== "Allgemein" ? " · " + e.cat.replace(/[<>&]/g, "") : ""}</div></div></div>`;
+  }).join("");
+  // Titel als Text setzen (keine HTML-Einschleusung)
+  box.querySelectorAll(".ev .t").forEach((el, i) => el.textContent = list[i].title);
+  // nur so viele Termine zeigen, wie ganz in die Karte passen
+  fitEvents();
+}
+/* blendet Termine aus, die nicht mehr ganz in die Karte passen – läuft bei jeder Größenänderung neu */
+function fitEvents(){
+  const box = $("events"), evs = [...box.querySelectorAll(".ev")];
+  evs.forEach(ev => ev.style.visibility = "");
+  const limit = box.getBoundingClientRect().bottom - parseFloat(getComputedStyle(box).paddingBottom);
+  evs.forEach((ev, i) => { if (i > 0 && ev.getBoundingClientRect().bottom > limit + 1) ev.style.visibility = "hidden"; });
+}
+if (window.ResizeObserver) new ResizeObserver(fitEvents).observe($("events"));
+document.fonts && document.fonts.ready.then(fitEvents);
+
+/* ===== Bilderstrecke aus den letzten Beiträgen ===== */
+function pickSrc(img){
+  const set = img.getAttribute("srcset");
+  if (set) {
+    const c = set.split(",").map(s => s.trim().split(/\s+/)).map(([u, w]) => ({u, w: parseInt(w) || 0}))
+      .filter(x => x.w && x.w <= 2000).sort((a, b) => b.w - a.w);
+    if (c.length) return c[0].u;
+  }
+  return img.getAttribute("src");
+}
+async function loadPhotos(){
+  const posts = await getJSON(CFG.site + "/wp-json/wp/v2/posts?per_page=" + CFG.posts +
+    "&_embed=wp:featuredmedia&_fields=id,date,title,content,_links,_embedded");
+  const slides = [];
+  for (const p of posts) {
+    const urls = [];
+    const fm = p._embedded && p._embedded["wp:featuredmedia"] && p._embedded["wp:featuredmedia"][0];
+    if (fm && fm.media_details) {
+      const s = fm.media_details.sizes || {};
+      const best = s["1536x1536"] || s.large || s.full || {source_url: fm.source_url};
+      urls.push(best.source_url || fm.source_url);
+    }
+    const doc = new DOMParser().parseFromString(p.content.rendered, "text/html");
+    doc.querySelectorAll("img").forEach(img => {
+      const u = pickSrc(img);
+      if (!u || /\.(svg|gif)(\?|$)/i.test(u) || /emoji|icon|logo/i.test(u)) return;
+      const w = parseInt(img.getAttribute("width")) || 999;
+      if (w < 400) return;
+      if (!urls.some(x => x.replace(/-\d+x\d+(?=\.\w+$)/, "") === u.replace(/-\d+x\d+(?=\.\w+$)/, ""))) urls.push(u);
+    });
+    urls.slice(0, CFG.imagesPerPost).forEach(u => slides.push({u, title: decode(p.title.rendered), date: p.date}));
+  }
+  return slides;
+}
+let slides = [], slideIdx = -1, slideTimer = null;
+function renderPhotos(list){
+  slides = list || [];
+  if (!slides.length) return;
+  if (!slideTimer) { nextSlide(); slideTimer = setInterval(nextSlide, CFG.slideSeconds * 1000); }
+}
+function nextSlide(){
+  if (!slides.length) return;
+  slideIdx = (slideIdx + 1) % slides.length;
+  const s = slides[slideIdx], box = $("photos");
+  const img = new Image();
+  img.onload = () => {
+    const el = document.createElement("div");
+    el.className = "slide" + (Math.abs(img.naturalWidth / img.naturalHeight - box.clientWidth / box.clientHeight) < 0.3 ? " cover" : "");
+    const blur = document.createElement("div"); blur.className = "blur"; blur.style.backgroundImage = `url("${s.u}")`;
+    const d = new Date(s.date);
+    const cap = document.createElement("div"); cap.className = "caption";
+    cap.innerHTML = '<div class="kicker"></div><div class="title"></div>';
+    cap.firstChild.textContent = MONL[d.getMonth()] + " " + d.getFullYear();
+    cap.lastChild.textContent = s.title;
+    el.append(blur, img, cap);
+    box.append(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("on")));
+    // ältere Folien aufräumen
+    const old = [...box.querySelectorAll(".slide, .empty")].slice(0, -1);
+    setTimeout(() => old.forEach(o => o.remove()), 1800);
+    // Fortschrittsbalken
+    let pr = box.querySelector(".progress");
+    if (!pr) { pr = document.createElement("div"); pr.className = "progress"; box.append(pr); }
+    pr.style.transition = "none"; pr.style.width = "0";
+    box.append(pr);
+    requestAnimationFrame(() => requestAnimationFrame(() => { pr.style.transition = `width ${CFG.slideSeconds}s linear`; pr.style.width = "100%"; }));
+  };
+  img.onerror = () => { slides.splice(slideIdx, 1); slideIdx--; };
+  img.src = s.u;
+}
+
+/* ===== Start ===== */
+function refreshAll(){
+  cached("weather", loadWeather, renderWeather, $("weather"));
+  cached("water", loadWater, renderWater, $("water"));
+  cached("events", loadEvents, renderEvents, $("events"));
+  cached("photos", loadPhotos, l => { slides = l; renderPhotos(l); });
+  $("foot").textContent = "Stand " + hm(new Date()) + " · Wetter: Open-Meteo · Wasser: Pegelonline (WSV) · Termine & Bilder: orvo.de";
+}
+tick(); setInterval(tick, 1000 * 5);
+renderSun(); setInterval(renderSun, 60 * 1000);
+refreshAll(); setInterval(refreshAll, CFG.refreshMinutes * 60 * 1000);
+setTimeout(() => location.reload(), CFG.reloadHours * 3600 * 1000);   // gegen Speicherlecks im Dauerbetrieb
+</script>
+</body>
+</html>
