@@ -72,7 +72,7 @@ Die Anzeige pflegt sich weitgehend selbst: Neue Termine in easyVerein und neue B
 
 **Anschluss:** Der Splitter muss am **linken HDMI-Anschluss** des Pi stecken (neben dem Stromanschluss). Yodeck nutzt nur diesen Ausgang.
 
-**Auflösung:** Ein Splitter gibt meist die Auflösung aus, die beide Geräte können. Bei einem 4K-Fernseher und einem Full-HD-Monitor ist das Full HD. Die Anzeigeseite passt sich jeder Auflösung an.
+**Auflösung:** Der Pi ist fest auf **1920 × 1080 bei 60 Hz** eingestellt, siehe [Abschnitt 3.7](#37-feste-auflösung-1920--1080). Fernseher und Monitor müssen Full HD können; ein älteres Gerät, das das nicht kann, bleibt schwarz. Die Anzeigeseite selbst passt sich jeder Auflösung an.
 
 ---
 
@@ -143,6 +143,40 @@ Hinweise:
 - Auf dem Pi läuft Yodecks eigenes System (Raspbian 10 „buster“). Dienste wie Raspberry Pi Connect laufen darauf nicht.
 - Ein Yodeck-Update kann hinterlegte SSH-Keys wieder entfernen. Dann den Key mit `ssh-copy-id` neu installieren.
 - Änderungen am System nur mit Vorsicht: Yodeck verwaltet den Pi und kann sie überschreiben.
+
+### 3.7 Feste Auflösung 1920 × 1080
+
+**Problem (13. November 2026):** Der Pi lief nur mit 1024 × 768, das Bild war entsprechend grob. Ursache: Über HDMI kamen keine Angaben des Bildschirms an (EDID leer, `xrandr` zeigt „0mm x 0mm“). Das passiert bei manchen Splittern und älteren Monitoren. Der Pi fällt dann auf 1024 × 768 zurück. Die Einstellung **Screens → Pi → Display → Resolution** im Portal kam auf dem Pi nicht an.
+
+**Lösung per SSH, zwei Änderungen:**
+
+1. In `/boot/config.txt` am Ende (im Block `[all]`):
+   ```
+   hdmi_group=1
+   hdmi_mode=16
+   ```
+   Das ist der Standardmodus 1080p mit 60 Hz. Er wird damit auch ohne Bildschirmangaben angeboten. Sicherung der alten Datei: `/boot/config.txt.bak-20261113`.
+
+2. Neue Datei `/etc/X11/xorg.conf.d/10-orvo-1080p.conf`:
+   ```
+   Section "Monitor"
+       Identifier "HDMI-1"
+       Option "PreferredMode" "1920x1080"
+   EndSection
+   ```
+   Ohne diese Datei steht 1080p zwar zur Auswahl, die Bildschirmausgabe startet aber weiter mit 1024 × 768.
+
+Danach neu starten: `ssh yodeck 'sudo systemctl reboot'`.
+
+**Prüfen:**
+```
+ssh yodeck 'A=$(ls /tmp/serverauth.*); sudo env DISPLAY=:0 XAUTHORITY=$A xrandr | head -3'
+```
+Richtig ist `current 1920 x 1080` und ein `*` hinter `1920x1080`.
+
+**Achtung:** Yodeck schreibt `/boot/config.txt` aus den Portal-Einstellungen neu, wenn sich diese ändern (oder bei einem größeren Update). Dabei können die zwei `hdmi_`-Zeilen verloren gehen. Deshalb im Portal ebenfalls **1920×1080** eingestellt lassen und nach Änderungen an den Display-Einstellungen oder nach Yodeck-Updates die Auflösung wie oben prüfen. Fehlen die Zeilen, wieder eintragen und neu starten.
+
+**Rückgängig machen:** `sudo cp /boot/config.txt.bak-20261113 /boot/config.txt`, `sudo rm /etc/X11/xorg.conf.d/10-orvo-1080p.conf`, neu starten.
 
 ---
 
@@ -330,7 +364,8 @@ Die Kopie auf GitHub Pages (`https://schulze9.github.io/orvo-anzeige/`) läuft w
 
 | Problem | Mögliche Ursache und Lösung |
 |---|---|
-| Bildschirm schwarz | Splitter am **linken** HDMI-Anschluss? Splitter mit Strom versorgt? Im Portal prüfen, ob der Bildschirm online ist. |
+| Bildschirm schwarz | Splitter am **linken** HDMI-Anschluss? Splitter mit Strom versorgt? Im Portal prüfen, ob der Bildschirm online ist. Kann das Gerät kein Full HD? Der Pi gibt fest 1920 × 1080 aus ([3.7](#37-feste-auflösung-1920--1080)). |
+| Bild grob oder nur 1024 × 768 | Feste Auflösung verloren, z. B. nach einer Portal-Änderung oder einem Yodeck-Update. Prüfen und wieder eintragen wie in [Abschnitt 3.7](#37-feste-auflösung-1920--1080). |
 | Nur ein Gerät zeigt ein Bild | Kabel und Eingang am betroffenen Gerät prüfen; anderen Splitter-Ausgang testen. |
 | Pi ist offline | WLAN im Portal prüfen (Groß-/Kleinschreibung des Namens). Notfalls Netzwerkkabel anschließen. |
 | Bereiche sind abgeblendet | Eine Datenquelle ist nicht erreichbar; es wird der letzte bekannte Stand gezeigt. Internet prüfen. |
@@ -382,6 +417,8 @@ Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese
 - [ ] Klären, ob die Kalender *Vereinstermine*, *Regatten* und *Trainingszeiten* im Abo enthalten sind. Derzeit liefert das Abo nur Bus, Anhänger, Clubraum und Wanderfahrten.
 
 Erledigt:
+- [x] Pi fest auf 1920 × 1080 eingestellt (13. November 2026, [Abschnitt 3.7](#37-feste-auflösung-1920--1080)).
+- [x] Zertifikat von orvo.de um www.orvo.de erweitert (13. November 2026).
 - [x] Seite auf orvo.de abgelegt: `https://orvo.de/anzeige/` (13. November 2026).
 - [x] Termine aus easyVerein statt aus dem Kalender auf orvo.de (13. November 2026).
 - [x] Secret `EASYVEREIN_ICS` hinterlegt, Action getestet (7 Termine übernommen).
