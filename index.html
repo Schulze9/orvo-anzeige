@@ -151,6 +151,10 @@ const CFG = {
   waterTempStation: "eba772d4-509e-4fe7-ba51-d9a29b190432", // Weser, Elsfleth (Wassertemperatur)
   levelStation: "1b51e55e-088a-44c3-a633-b1bee44422d7",     // Hunte, Oldenburg-Drielake (Pegel)
   eventsUrl: "https://schulze9.github.io/orvo-anzeige/events.json", // Termine aus easyVerein (GitHub Action)
+  // Instagram-Feed von Behold.so (JSON-Adresse aus dem Behold-Dashboard); leer = keine Instagram-Bilder
+  instagramFeed: new URLSearchParams(location.search).get("ig") || "",
+  instagramPosts: 12,                     // so viele Instagram-Beiträge
+  imagesPerInstagramPost: 3,              // bei Karussell-Beiträgen höchstens so viele Bilder
   refreshMinutes: 15,
   reloadHours: 6
 };
@@ -356,7 +360,7 @@ function pickSrc(img){
   }
   return img.getAttribute("src");
 }
-async function loadPhotos(){
+async function loadOrvoPhotos(){
   const posts = await getJSON(CFG.site + "/wp-json/wp/v2/posts?per_page=" + CFG.posts +
     "&_embed=wp:featuredmedia&_fields=id,date,title,content,_links,_embedded");
   const slides = [];
@@ -376,9 +380,36 @@ async function loadPhotos(){
       if (w < 400) return;
       if (!urls.some(x => x.replace(/-\d+x\d+(?=\.\w+$)/, "") === u.replace(/-\d+x\d+(?=\.\w+$)/, ""))) urls.push(u);
     });
-    urls.slice(0, CFG.imagesPerPost).forEach(u => slides.push({u, title: decode(p.title.rendered), date: p.date}));
+    const group = urls.slice(0, CFG.imagesPerPost).map(u => ({u, title: decode(p.title.rendered), date: p.date}));
+    if (group.length) slides.push(group);
   }
   return slides;
+}
+/* Instagram über Behold.so: liefert Beiträge mit Bildern auf Beholds eigenem CDN (CORS erlaubt) */
+async function loadInstagram(){
+  if (!CFG.instagramFeed) return [];
+  const d = await getJSON(CFG.instagramFeed);
+  const posts = (Array.isArray(d) ? d : d.posts || []).slice(0, CFG.instagramPosts);
+  const url = m => (m.sizes && ((m.sizes.large || {}).mediaUrl || (m.sizes.full || {}).mediaUrl))
+                   || (m.mediaType === "VIDEO" ? m.thumbnailUrl : m.mediaUrl) || m.thumbnailUrl;
+  const groups = [];
+  for (const p of posts) {
+    let text = (p.prunedCaption || p.caption || "").split("\n").map(t => t.trim()).find(Boolean) || "";
+    if (text.length > 70) text = text.slice(0, 68).replace(/\s+\S*$/, "") + " …";
+    const media = p.mediaType === "CAROUSEL_ALBUM" && p.children && p.children.length ? p.children : [p];
+    const group = media.map(url).filter(Boolean).slice(0, CFG.imagesPerInstagramPost)
+      .map(u => ({u, title: text || "Neu auf Instagram", date: p.timestamp, ig: true}));
+    if (group.length) groups.push(group);
+  }
+  return groups;
+}
+/* beide Quellen zusammen: Beiträge nach Datum, neueste zuerst; fällt eine Quelle aus, läuft die andere weiter */
+async function loadPhotos(){
+  const [orvo, ig] = await Promise.allSettled([loadOrvoPhotos(), loadInstagram()]);
+  if (orvo.status === "rejected" && (ig.status === "rejected" || !CFG.instagramFeed)) throw orvo.reason;
+  const groups = [...(orvo.value || []), ...(ig.value || [])];
+  groups.sort((a, b) => new Date(b[0].date) - new Date(a[0].date));
+  return groups.flat();
 }
 let slides = [], slideIdx = -1, slideTimer = null;
 function renderPhotos(list){
@@ -398,7 +429,7 @@ function nextSlide(){
     const d = new Date(s.date);
     const cap = document.createElement("div"); cap.className = "caption";
     cap.innerHTML = '<div class="kicker"></div><div class="title"></div>';
-    cap.firstChild.textContent = MONL[d.getMonth()] + " " + d.getFullYear();
+    cap.firstChild.textContent = (s.ig ? "Instagram · " : "") + MONL[d.getMonth()] + " " + d.getFullYear();
     cap.lastChild.textContent = s.title;
     el.append(blur, img, cap);
     box.append(el);
@@ -423,7 +454,7 @@ function refreshAll(){
   cached("water", loadWater, renderWater, $("water"));
   cached("events", loadEvents, renderEvents, $("events"));
   cached("photos", loadPhotos, l => { slides = l; renderPhotos(l); });
-  $("foot").textContent = "Stand " + hm(new Date()) + " · Wetter: Open-Meteo · Wasser: Pegelonline (WSV) · Termine: easyVerein · Bilder: orvo.de";
+  $("foot").textContent = "Stand " + hm(new Date()) + " · Wetter: Open-Meteo · Wasser: Pegelonline (WSV) · Termine: easyVerein · Bilder: orvo.de" + (CFG.instagramFeed ? " & Instagram" : "");
 }
 tick(); setInterval(tick, 1000 * 5);
 renderSun(); setInterval(renderSun, 60 * 1000);
