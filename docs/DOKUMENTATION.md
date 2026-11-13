@@ -207,7 +207,7 @@ Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger),
 
 Pegelonline-Basisadresse: `https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/`
 
-**Zur Wassertemperatur:** An der Hunte in und um Oldenburg misst Pegelonline keine Wassertemperatur, nur Wasserstände. Die nächstgelegene Messstelle mit Temperatur ist die Weser bei Elsfleth (etwa 25 km entfernt). Die Anzeige nennt den Messort deshalb ausdrücklich. Die Hunte in Oldenburg ist tideabhängig; der Pegeltrend zeigt, ob gerade Flut oder Ebbe ist.
+**Zur Wassertemperatur:** An der Hunte in und um Oldenburg misst Pegelonline keine Wassertemperatur, nur Wasserstände. Die nächstgelegene Messstelle mit Temperatur ist die Weser bei Elsfleth (etwa 25 km entfernt). Auf der Anzeige steht als Ort trotzdem „Oldenburg“, weil der Unterschied für den Ruderbetrieb kaum ins Gewicht fällt. Die Hunte in Oldenburg ist tideabhängig; der Pegeltrend zeigt, ob gerade Flut oder Ebbe ist.
 
 **Wetterstandort:** 53,1375° N, 8,2240° O (Oldenburg, an der Hunte).
 
