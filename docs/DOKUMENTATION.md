@@ -6,7 +6,7 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
 
 ![Vorschau der Anzeige in 1920×1080](vorschau.png)
 
-*Vorschau in 1920×1080 (13. November 2026) mit Terminen aus easyVerein.*
+*Bildschirmfoto direkt vom Yodeck-Player (1920 × 1080, 13. November 2026, 13:24 Uhr) mit Terminen aus easyVerein.*
 
 ---
 
