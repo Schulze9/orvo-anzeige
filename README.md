@@ -10,3 +10,7 @@ Anzeigeseite für den Fernseher im Eingangsbereich des Oldenburger Rudervereins 
 
 Eine einzelne Datei (`index.html`), keine Server-Abhängigkeiten. Einstellungen stehen oben im Skript (`CFG`).
 URL-Parameter: `?slide=12` (Sekunden pro Bild).
+
+**Ausführliche Dokumentation:** [docs/DOKUMENTATION.md](docs/DOKUMENTATION.md)
+
+**Live:** https://schulze9.github.io/orvo-anzeige/
