@@ -13,4 +13,4 @@ URL-Parameter: `?slide=12` (Sekunden pro Bild).
 
 **Ausführliche Dokumentation:** [docs/DOKUMENTATION.md](docs/DOKUMENTATION.md)
 
-**Live:** https://schulze9.github.io/orvo-anzeige/
+**Live:** https://orvo.de/anzeige/ (Kopie und Testadresse: https://schulze9.github.io/orvo-anzeige/)

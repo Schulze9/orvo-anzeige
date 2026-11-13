@@ -20,7 +20,7 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
 6. [Einstellungen](#6-einstellungen)
 7. [Inhalte pflegen (für Trainer und Redaktion)](#7-inhalte-pflegen-für-trainer-und-redaktion)
 8. [Änderungen an der Seite veröffentlichen](#8-änderungen-an-der-seite-veröffentlichen)
-9. [Umzug der Seite auf orvo.de](#9-umzug-der-seite-auf-orvode)
+9. [Die Seite auf orvo.de](#9-die-seite-auf-orvode)
 10. [Fehlersuche](#10-fehlersuche)
 11. [Entscheidungen und Hintergründe](#11-entscheidungen-und-hintergründe)
 12. [Offene Punkte](#12-offene-punkte)
@@ -37,7 +37,7 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
  → events.json                       │               │                │
           └──────────────┬───────────┴───────────────┴────────────────┘
                          ▼
-        Anzeigeseite  (index.html, GitHub Pages)
+        Anzeigeseite  (index.html auf orvo.de/anzeige, Kopie auf GitHub Pages)
                          │  als „Web Page“ eingebunden
                          ▼
         Yodeck-Portal  ──►  Yodeck-Player (Raspberry Pi 4)
@@ -121,8 +121,9 @@ Für den endgültigen Betrieb im Verein muss das Vereins-WLAN als **primäres** 
 ### 3.5 Anzeigeseite einbinden
 
 1. **Media → Add Media → Web Page**.
-2. Adresse: `https://schulze9.github.io/orvo-anzeige/`
+2. Adresse: **`https://orvo.de/anzeige/`**
    (optional mit `?slide=12` für 12 Sekunden pro Bild, siehe [Abschnitt 6](#6-einstellungen)).
+   Ersatzadresse, falls orvo.de nicht erreichbar ist: `https://schulze9.github.io/orvo-anzeige/`.
 3. Die Web Page einer **Playlist** hinzufügen, Dauer lang setzen (z. B. 24 Stunden). Die Seite wechselt ihre Inhalte selbst.
 4. Die Playlist dem Bildschirm zuweisen.
 
@@ -299,22 +300,29 @@ Ablauf:
 1. `index.html` bearbeiten.
 2. Lokal testen: im Ordner `python3 -m http.server 8000` starten und `http://localhost:8000` im Browser öffnen. Ein Fenster in 1920×1080 entspricht dem Fernseher.
 3. Änderungen committen und pushen (`git add`, `git commit`, `git push`).
-4. GitHub Pages veröffentlicht nach etwa einer Minute.
-5. Der Yodeck-Player lädt die Seite spätestens nach 6 Stunden neu. Sofort: im Portal den Bildschirm neu starten.
+4. GitHub Pages veröffentlicht nach etwa einer Minute (Testadresse).
+5. Die neue `index.html` auf orvo.de hochladen, siehe [Abschnitt 9](#9-die-seite-auf-orvode).
+6. Der Yodeck-Player lädt die Seite spätestens nach 6 Stunden neu. Sofort: im Portal den Bildschirm neu starten.
 
 ---
 
-## 9. Umzug der Seite auf orvo.de
+## 9. Die Seite auf orvo.de
 
-Die Seite kann jederzeit auf den Webspace von orvo.de umziehen:
+**Hauptadresse der Anzeige: `https://orvo.de/anzeige/`** (Datei `anzeige/index.html` auf dem Webspace von orvo.de, seit 13. November 2026).
 
-1. `index.html` z. B. nach `orvo.de/anzeige/index.html` hochladen (per FTP oder Dateimanager des Hosters).
-2. Im Browser `https://orvo.de/anzeige/` prüfen.
-3. In Yodeck bei der Web Page die Adresse austauschen.
+Die Kopie auf GitHub Pages (`https://schulze9.github.io/orvo-anzeige/`) läuft weiter. Sie dient als Testadresse und Ersatz, falls orvo.de ausfällt.
 
-Vorteil: Die Bilder kommen dann von derselben Adresse wie die Seite selbst.
+**Wann muss die Datei auf orvo.de erneuert werden?** Nur wenn sich `index.html` selbst ändert, also Aussehen oder Funktion. Neue Termine und Bilder kommen ohne neuen Upload an.
 
-**Termine nach dem Umzug:** Es ist keine Änderung nötig. `index.html` lädt die Termine schon von der GitHub-Adresse (`eventsUrl`), und die Action erzeugt `events.json` weiter. Dafür muss das GitHub-Repository **öffentlich** bleiben. Soll GitHub ganz entfallen, `tools/easyverein.py` als Cronjob beim Hoster laufen lassen und `eventsUrl` auf die dort erzeugte Datei setzen.
+**So wird sie erneuert:**
+1. Die Datei als **Rohdatei** besorgen: aus dem lokalen Repository oder über `https://raw.githubusercontent.com/Schulze9/orvo-anzeige/main/index.html` bzw. den Knopf **„Download raw file“** auf GitHub.
+   > **Achtung:** Nicht die GitHub-Seite der Datei mit „Speichern unter“ sichern. Das ergibt eine etwa 600 KB große GitHub-Ansicht mit Zeilennummern statt der Anzeige. Die richtige Datei ist etwa **25 KB** groß und beginnt mit `<!doctype html>`.
+2. Im Dateimanager des Hosters die alte `anzeige/index.html` löschen und die neue hochladen.
+3. Prüfen: Die Datei ist etwa 25 KB groß, und `https://orvo.de/anzeige/` zeigt die Anzeige, nicht die GitHub-Ansicht.
+
+**Termine:** `index.html` lädt die Termine von `https://schulze9.github.io/orvo-anzeige/events.json` (Einstellung `eventsUrl`). Die GitHub Action erzeugt diese Datei weiter. Dafür muss das GitHub-Repository **öffentlich** bleiben. Soll GitHub ganz entfallen, `tools/easyverein.py` als Cronjob beim Hoster laufen lassen und `eventsUrl` auf die dort erzeugte Datei setzen.
+
+**Vorteil gegenüber GitHub Pages:** Die Bilder kommen von derselben Adresse wie die Seite, und die Anzeige läuft unter der Vereinsadresse.
 
 ---
 
@@ -329,7 +337,8 @@ Vorteil: Die Bilder kommen dann von derselben Adresse wie die Seite selbst.
 | Keine Termine | In easyVerein stehen in den nächsten 120 Tagen keine Termine, oder der Abgleich läuft nicht: unter **Actions → Termine aus easyVerein** den letzten Lauf ansehen. Warnung „Secret EASYVEREIN_ICS fehlt“ oder Fehler „kein Kalender“ → Abo-Adresse neu als Secret eintragen. |
 | „Bilder werden geladen …“ bleibt stehen | orvo.de nicht erreichbar oder die letzten Beiträge haben keine Bilder. |
 | Wassertemperatur „(alt)“ | Die Messstelle hat seit über 6 Stunden keinen neuen Wert geliefert (Störung bei Pegelonline). |
-| Änderung an der Seite nicht sichtbar | GitHub Pages braucht etwa eine Minute; der Player lädt spätestens nach 6 Stunden neu oder nach einem Neustart über das Portal. |
+| Änderung an der Seite nicht sichtbar | Neue `index.html` auch auf orvo.de hochgeladen? GitHub Pages braucht etwa eine Minute. Der Player lädt spätestens nach 6 Stunden neu oder nach einem Neustart über das Portal. |
+| orvo.de/anzeige zeigt Code mit Zeilennummern und GitHub-Menü | Statt der Rohdatei wurde die GitHub-Ansicht hochgeladen. Rohdatei hochladen (etwa 25 KB), siehe [Abschnitt 9](#9-die-seite-auf-orvode). |
 | SSH fragt nach Passwort | Key wurde durch ein Yodeck-Update entfernt: `ssh-copy-id user@<IP>` mit dem Remote-Support-Passwort. |
 | SSH nicht erreichbar | IP-Adresse hat sich geändert (Portal → Screens → Status) oder „Allow SSH on the LAN“ ist aus. |
 
@@ -352,7 +361,7 @@ Termine, Bilder, Wasserdaten und Dämmerungszeiten kommen automatisch aus vorhan
 Die Termine werden im Verein in easyVerein gepflegt. easyVerein bietet dafür ein ICS-Abo, aber ohne CORS, und die Adresse enthält einen geheimen Schlüssel. Ein Browser kann die Datei deshalb nicht direkt laden, und die Adresse darf nicht in die öffentliche Seite. Die Action hält den Schlüssel als Secret geheim und veröffentlicht nur die nötigen Angaben. Der öffentliche easyVerein-Kalender (`easyverein.com/public/ORVO/calendar`) war keine Alternative: Ohne Anmeldung zeigt er keine Termine.
 
 **Warum ist das Repository öffentlich?**
-GitHub Pages funktioniert mit einem kostenlosen GitHub-Konto nur für öffentliche Repositorys. Wird das Repository privat, sind die Anzeigeseite und `events.json` nicht mehr erreichbar. Das Repository enthält keine Zugangsdaten: Die easyVerein-Adresse liegt nur als Secret vor, WLAN- und Yodeck-Passwörter stehen nirgends. Öffentlich sind Code, Dokumentation und die Termintitel mit Datum. Entscheidung am 13. November 2026: öffentlich lassen.
+GitHub Pages funktioniert mit einem kostenlosen GitHub-Konto nur für öffentliche Repositorys. Wird das Repository privat, ist `events.json` nicht mehr erreichbar, und die Anzeige auf orvo.de zeigt keine Termine mehr. Das Repository enthält keine Zugangsdaten: Die easyVerein-Adresse liegt nur als Secret vor, WLAN- und Yodeck-Passwörter stehen nirgends. Öffentlich sind Code, Dokumentation und die Termintitel mit Datum. Entscheidung am 13. November 2026: öffentlich lassen.
 
 **Warum bürgerliche Dämmerung?**
 Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese Zeiten hervorgehoben.
@@ -363,7 +372,7 @@ Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese
 
 - [ ] Pi endgültig in den Verein bringen und das Vereins-WLAN im Portal als primäres WLAN eintragen.
 - [ ] Prüfen, ob „Web Page“ im kostenlosen Yodeck-Plan verfügbar ist.
-- [ ] Seite auf orvo.de umziehen (optional, siehe [Abschnitt 9](#9-umzug-der-seite-auf-orvode)).
+- [ ] In Yodeck bei der Web Page die Adresse auf `https://orvo.de/anzeige/` umstellen.
 - [ ] Im Vereinsnetz eine feste IP-Adresse für den Pi vergeben (erleichtert SSH).
 - [ ] Optional: Eilmeldungs-Zeile für kurzfristige Hinweise (z. B. „Training fällt aus“).
 - [ ] Beim ersten Lauf, der neue Termine committet, prüfen, ob GitHub Pages `events.json` danach neu veröffentlicht.
@@ -371,6 +380,7 @@ Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese
 - [ ] Klären, ob die Kalender *Vereinstermine*, *Regatten* und *Trainingszeiten* im Abo enthalten sind. Derzeit liefert das Abo nur Bus, Anhänger, Clubraum und Wanderfahrten.
 
 Erledigt:
+- [x] Seite auf orvo.de abgelegt: `https://orvo.de/anzeige/` (13. November 2026).
 - [x] Termine aus easyVerein statt aus dem Kalender auf orvo.de (13. November 2026).
 - [x] Secret `EASYVEREIN_ICS` hinterlegt, Action getestet (7 Termine übernommen).
 - [x] Ortsangabe der Wassertemperatur auf „Oldenburg“ geändert.
