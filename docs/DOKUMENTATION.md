@@ -30,11 +30,12 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
 ## 1. Überblick
 
 ```
- orvo.de (WordPress)          Open-Meteo        Pegelonline (WSV)
- ├─ Beiträge mit Fotos        Wetter            Wassertemperatur, Pegel
- └─ Termin-Kalender              │                     │
-          │                      │                     │
-          └──────────────┬───────┴─────────────────────┘
+ easyVerein (Kalender)    orvo.de (WordPress)   Open-Meteo   Pegelonline (WSV)
+          │ ICS-Abo           Beiträge mit Fotos   Wetter       Wassertemperatur, Pegel
+          ▼                          │               │                │
+ GitHub Action (alle 30 min)         │               │                │
+ → events.json                       │               │                │
+          └──────────────┬───────────┴───────────────┴────────────────┘
                          ▼
         Anzeigeseite  (index.html, GitHub Pages)
                          │  als „Web Page“ eingebunden
@@ -53,9 +54,11 @@ Digitale Anzeige für den Eingangsbereich des **Oldenburger Rudervereins (ORVO)*
 | **HDMI-Splitter** | Gibt dasselbe Bild auf Fernseher und Monitor aus |
 | **Yodeck-Portal** (app.yodeck.com) | Verwaltung: Playlists, Bildschirm, WLAN, Benutzer |
 | **Anzeigeseite** (`index.html`) | Eine einzelne Webseite, die alle Daten selbst lädt und darstellt |
-| **orvo.de** | Liefert Fotos (aus Beiträgen) und Termine (aus dem Kalender) |
+| **easyVerein** | Liefert die Termine (Vereinskalender mit Bus-, Hänger- und Raumbuchungen) |
+| **GitHub Action** `termine.yml` | Überträgt die Termine alle 30 Minuten aus easyVerein in `events.json` |
+| **orvo.de** | Liefert die Fotos (aus Beiträgen) |
 
-Die Anzeige pflegt sich weitgehend selbst: Neue Beiträge und Termine auf orvo.de erscheinen automatisch.
+Die Anzeige pflegt sich weitgehend selbst: Neue Termine in easyVerein und neue Beiträge auf orvo.de erscheinen automatisch.
 
 ---
 
@@ -153,7 +156,7 @@ Hinweise:
 | **Wetter** | Temperatur, gefühlte Temperatur, Wetterlage mit Symbol, Wind in Beaufort mit Richtungspfeil, Böen, Tiefst-/Höchstwert, Regenwahrscheinlichkeit |
 | **Wasser** | Wassertemperatur mit Messzeit, Hunte-Pegel mit Trend (↑ steigt, ↓ fällt, → gleich) |
 | **Ruderzeit heute** | Bürgerliche Morgen- und Abenddämmerung, Sonnenauf- und -untergang, Tagesbalken mit aktueller Uhrzeit, Hinweis „jetzt hell genug“ / „noch dunkel“ / „schon dunkel“ |
-| **Termine** | Die nächsten Termine aus dem ORVO-Kalender, mit Datum, Wochentag, Uhrzeit oder Zeitraum, Kategorie; Markierung „Heute“, „Morgen“ oder „Läuft“ |
+| **Termine** | Die nächsten Termine aus dem easyVerein-Kalender, mit Datum, Wochentag, Uhrzeit oder Zeitraum, Kalender (z. B. Wanderfahrten) und gebuchten Fahrzeugen/Räumen (Bus, Hänger, Clubraum); Markierung „Heute“, „Morgen“ oder „Läuft“ |
 | **Fußzeile** | Uhrzeit der letzten Aktualisierung und Datenquellen |
 
 Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger), ORVO-Rot als Akzent, Schrift „Exo 2“ (ähnlich dem ORVO-Logo). Alle Größen richten sich nach der Bildschirmbreite, die Seite funktioniert in jeder Auflösung.
@@ -161,7 +164,7 @@ Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger),
 ### 4.2 Technik
 
 - **Eine einzige Datei:** `index.html` mit HTML, CSS und JavaScript. Keine Bibliotheken, kein Server, kein Build-Schritt.
-- **Alle Daten lädt der Browser selbst** direkt bei den Quellen. Alle verwendeten Schnittstellen erlauben das (CORS).
+- **Fast alle Daten lädt der Browser selbst** direkt bei den Quellen (CORS erlaubt). Ausnahme: Die Termine liefert easyVerein nur als ICS-Abo ohne CORS und mit geheimem Schlüssel in der Adresse. Deshalb holt eine GitHub Action sie ab und legt sie als `events.json` neben die Seite.
 - **Aktualisierung:** Wetter, Wasser, Termine und Bilderliste alle **15 Minuten**; die Uhr alle 5 Sekunden; die Ruderzeit jede Minute.
 - **Kompletter Neustart** der Seite alle **6 Stunden**, gegen Speicherprobleme im Dauerbetrieb.
 - **Ausfallsicherheit:** Der letzte erfolgreiche Stand jeder Quelle wird im Browser gespeichert (`localStorage`). Fällt eine Quelle aus, zeigt die Seite den letzten Stand leicht abgeblendet weiter an.
@@ -178,12 +181,24 @@ Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger),
 
 ### 4.4 Termine im Detail
 
-- Abgefragt werden die nächsten **120 Tage**, höchstens 6 Termine.
-- Wiederholungstermine werden nur einmal pro Vorkommen gezeigt.
-- Es werden nur so viele Termine angezeigt, wie vollständig in die Karte passen. Abgeschnittene Termine werden ausgeblendet.
+Die Termine kommen aus dem Vereinskalender in **easyVerein** (Abo-Adresse „Kalender abonnieren“ im öffentlichen Kalender, nach Anmeldung sichtbar).
+
+**Abgleich** (`tools/easyverein.py`, ausgeführt von der GitHub Action `.github/workflows/termine.yml`):
+1. Die Action läuft alle 30 Minuten (GitHub startet zeitgesteuerte Läufe oft einige Minuten später), außerdem von Hand unter **Actions → Termine aus easyVerein → Run workflow**.
+2. Sie lädt die ICS-Datei. Die Adresse steht im Repository-Secret **`EASYVEREIN_ICS`** und nie im Code.
+3. Übernommen werden nur **Titel, Beginn, Ende und Kalendername**. Beschreibungen werden bewusst verworfen, denn sie enthalten Telefonnummern, E-Mail-Adressen und Kontodaten. `events.json` ist öffentlich lesbar.
+4. Buchungen derselben Veranstaltung (z. B. „Midwinter“ im Kalender *Bus* und „Midwinter (mittlerer Hänger)“ im Kalender *Anhänger mittel*) werden zu **einem** Termin zusammengefasst. Bus, Hänger und Clubraum erscheinen dann als Hinweis: „Fr · bis 20. Dez · Bus · Hänger mittel“.
+5. Der Kalender *Vorstand* wird nicht übernommen.
+6. Termine, die easyVerein als 00:00 UTC bis 23:59 speichert, werden als ganztägig gezeigt.
+7. Nur wenn sich etwas geändert hat, committet die Action eine neue `events.json`; GitHub Pages veröffentlicht sie danach.
+
+**Anzeige:**
+- Gezeigt werden die nächsten **120 Tage**, höchstens 6 Termine, und nur so viele, wie vollständig in die Karte passen.
 - Ganztägige Termine erscheinen als „ganztägig“, mehrtägige als „bis 3. Mai“.
-- Die Kategorie wird angezeigt, außer bei „Allgemein“. Hat die Kategorie im Kalender eine Farbe, erscheint sie als Streifen über dem Datum.
+- Für die Kalender Wanderfahrten, Regatten, Vereinstermine und Trainingszeiten ist eine Farbe hinterlegt (Streifen über dem Datum, `COLORS` in `tools/easyverein.py`).
 - Gibt es keine Termine, erscheint „Gerade keine Termine eingetragen“.
+
+**Wichtig:** Die Abo-Adresse gehört zum easyVerein-Zugang, mit dem sie abgerufen wurde. Wird dieser Zugang gelöscht oder die Adresse in easyVerein neu erzeugt, die neue Adresse als Secret `EASYVEREIN_ICS` eintragen (**Settings → Secrets and variables → Actions**).
 
 ### 4.5 Ruderzeit (bürgerliche Dämmerung)
 
@@ -198,7 +213,7 @@ Gestaltung: dunkelblauer Hintergrund (schont den Fernseher und blendet weniger),
 
 | Daten | Quelle | Schnittstelle | Schlüssel nötig |
 |---|---|---|---|
-| Termine | orvo.de, Plugin „My Calendar“ | `https://orvo.de/wp-json/my-calendar/v1/events?from=JJJJ-MM-TT&to=JJJJ-MM-TT` | nein |
+| Termine | easyVerein, ICS-Abo des Vereinskalenders, über GitHub Action → `events.json` | `https://easyverein.com/event/subscription/ORVO/<geheim>/calendar.ics` | ja, Schlüssel steckt in der Adresse (Secret `EASYVEREIN_ICS`) |
 | Fotos | orvo.de, WordPress | `https://orvo.de/wp-json/wp/v2/posts?per_page=10&_embed=wp:featuredmedia` | nein |
 | Wetter | Open-Meteo | `https://api.open-meteo.com/v1/forecast?...` | nein |
 | Wassertemperatur | Pegelonline (WSV), Weser bei **Elsfleth** | `.../stations/eba772d4-509e-4fe7-ba51-d9a29b190432/WT/currentmeasurement.json` | nein |
@@ -227,7 +242,7 @@ Pegelonline-Basisadresse: `https://www.pegelonline.wsv.de/webservices/rest-api/v
 | Einstellung | Standard | Bedeutung |
 |---|---|---|
 | `lat`, `lon` | 53.1375, 8.2240 | Standort für Wetter und Sonnenzeiten |
-| `site` | `https://orvo.de` | WordPress-Seite für Termine und Bilder |
+| `site` | `https://orvo.de` | WordPress-Seite für die Bilder |
 | `posts` | 10 | Anzahl der Beiträge für die Bilderstrecke |
 | `imagesPerPost` | 6 | Höchstzahl Bilder pro Beitrag |
 | `eventDays` | 120 | Wie viele Tage im Voraus Termine geladen werden |
@@ -248,7 +263,7 @@ In Yodeck muss für den laufenden Betrieb nichts gepflegt werden.
 | Ich möchte … | So geht's |
 |---|---|
 | Fotos von einer Regatta zeigen | Auf orvo.de einen Beitrag mit Beitragsbild und Fotos veröffentlichen. Erscheint nach spätestens 15 Minuten. |
-| Einen Termin ankündigen | Im Termin-Kalender auf orvo.de eintragen. Erscheint nach spätestens 15 Minuten. |
+| Einen Termin ankündigen | In easyVerein im Vereinskalender eintragen. Erscheint meist nach 30 bis 60 Minuten. |
 | Ein Bild nicht mehr zeigen | Es fällt automatisch heraus, wenn genug neuere Beiträge erschienen sind (es werden nur die letzten 10 berücksichtigt). |
 | Eine kurzfristige Meldung zeigen | Derzeit nicht in der Seite vorgesehen. Möglich: im Yodeck-Portal ein Bild oder eine Meldung in die Playlist vor die Web Page setzen. |
 
@@ -266,6 +281,9 @@ Repository: `https://github.com/Schulze9/orvo-anzeige`
 | Datei | Inhalt |
 |---|---|
 | `index.html` | Die komplette Anzeigeseite |
+| `events.json` | Termine aus easyVerein (wird von der Action geschrieben, nicht von Hand ändern) |
+| `tools/easyverein.py` | Abgleich easyVerein → `events.json` |
+| `.github/workflows/termine.yml` | GitHub Action für den Abgleich |
 | `README.md` | Kurzbeschreibung |
 | `docs/DOKUMENTATION.md` | Diese Dokumentation |
 | `docs/vorschau.png` | Vorschaubild |
@@ -287,7 +305,9 @@ Die Seite kann jederzeit auf den Webspace von orvo.de umziehen:
 2. Im Browser `https://orvo.de/anzeige/` prüfen.
 3. In Yodeck bei der Web Page die Adresse austauschen.
 
-Vorteil: Termine und Bilder kommen dann von derselben Adresse wie die Seite selbst. Die Seite hängt nicht mehr von GitHub ab.
+Vorteil: Die Bilder kommen dann von derselben Adresse wie die Seite selbst.
+
+**Termine nach dem Umzug:** `events.json` wird weiter von der GitHub Action erzeugt. In `index.html` dann `getJSON("events.json…")` auf `https://schulze9.github.io/orvo-anzeige/events.json` ändern (GitHub Pages erlaubt den Abruf von fremden Seiten). Alternativ das Skript als Cronjob beim Hoster laufen lassen.
 
 ---
 
@@ -299,7 +319,7 @@ Vorteil: Termine und Bilder kommen dann von derselben Adresse wie die Seite selb
 | Nur ein Gerät zeigt ein Bild | Kabel und Eingang am betroffenen Gerät prüfen; anderen Splitter-Ausgang testen. |
 | Pi ist offline | WLAN im Portal prüfen (Groß-/Kleinschreibung des Namens). Notfalls Netzwerkkabel anschließen. |
 | Bereiche sind abgeblendet | Eine Datenquelle ist nicht erreichbar; es wird der letzte bekannte Stand gezeigt. Internet prüfen. |
-| Keine Termine | Im Kalender auf orvo.de stehen in den nächsten 120 Tagen keine Termine. |
+| Keine Termine | In easyVerein stehen in den nächsten 120 Tagen keine Termine, oder der Abgleich läuft nicht: unter **Actions → Termine aus easyVerein** den letzten Lauf ansehen. Warnung „Secret EASYVEREIN_ICS fehlt“ oder Fehler „kein Kalender“ → Abo-Adresse neu als Secret eintragen. |
 | „Bilder werden geladen …“ bleibt stehen | orvo.de nicht erreichbar oder die letzten Beiträge haben keine Bilder. |
 | Wassertemperatur „(alt)“ | Die Messstelle hat seit über 6 Stunden keinen neuen Wert geliefert (Störung bei Pegelonline). |
 | Änderung an der Seite nicht sichtbar | GitHub Pages braucht etwa eine Minute; der Player lädt spätestens nach 6 Stunden neu oder nach einem Neustart über das Portal. |

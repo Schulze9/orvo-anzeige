@@ -303,25 +303,19 @@ function renderWater(d){
   $("wtFacts").innerHTML = html;
 }
 
-/* ===== Termine (My Calendar auf orvo.de) ===== */
+/* ===== Termine (easyVerein, per GitHub Action alle 30 min nach events.json übertragen) ===== */
 async function loadEvents(){
   const qf = new URLSearchParams(location.search).get("from");   // nur zum Testen
   const from = qf ? new Date(qf) : new Date(), to = new Date(Date.now() + CFG.eventDays * 864e5);
-  const d = await getJSON(CFG.site + "/wp-json/my-calendar/v1/events?from=" + ymd(from) + "&to=" + ymd(to));
-  const list = Array.isArray(d) ? d : Object.values(d).flat();
-  const seen = new Set(), out = [];
-  for (const e of list) {
-    if (!e || seen.has(e.occur_id)) continue; seen.add(e.occur_id);
-    out.push({title: decode(e.event_title), begin: e.occur_begin, end: e.occur_end,
-              time: e.event_time, endtime: e.event_endtime, cat: decode(e.category_name || ""), color: e.category_color || ""});
-  }
-  out.sort((a, b) => a.begin.localeCompare(b.begin));
-  return out.filter(e => e.end.slice(0, 10) >= ymd(from)).slice(0, CFG.maxEvents);
+  const d = await getJSON("events.json?t=" + Date.now());
+  const list = (d.events || []).map(e => ({...e,
+    time: e.allDay ? "00:00:00" : e.begin.slice(11), endtime: e.allDay ? "23:59:59" : e.end.slice(11)}));
+  return list.filter(e => e.end.slice(0, 10) >= ymd(from) && e.begin.slice(0, 10) <= ymd(to)).slice(0, CFG.maxEvents);
 }
 function renderEvents(list){
   const box = $("events");
   if (!list.length) {
-    box.innerHTML = '<h2>Termine</h2><div class="none"><b>Gerade keine Termine eingetragen</b>Neue Termine erscheinen hier automatisch, sobald sie im Kalender auf orvo.de stehen.</div>';
+    box.innerHTML = '<h2>Termine</h2><div class="none"><b>Gerade keine Termine eingetragen</b>Neue Termine erscheinen hier automatisch, sobald sie im easyVerein-Kalender stehen.</div>';
     return;
   }
   const today = ymd(new Date()), tomorrow = ymd(new Date(Date.now() + 864e5));
@@ -334,7 +328,7 @@ function renderEvents(list){
     if (multi && e.begin.slice(0, 10) < today) badge = "Läuft";
     const col = /^#[0-9a-f]{3,8}$/i.test(e.color) ? e.color : "var(--blue)";
     return `<div class="ev"><div class="d" style="border-top-color:${col}"><div class="day">${b.getDate()}</div><div class="mon">${MON[b.getMonth()]}</div></div>` +
-      `<div><div class="t"></div><div class="m">${badge ? `<span class="badge">${badge}</span>` : ""}${WD[b.getDay()].slice(0, 2)} · ${when}${e.cat && e.cat !== "Allgemein" ? " · " + e.cat.replace(/[<>&]/g, "") : ""}</div></div></div>`;
+      `<div><div class="t"></div><div class="m">${badge ? `<span class="badge">${badge}</span>` : ""}${WD[b.getDay()].slice(0, 2)} · ${when}${[e.cat, ...(e.res || [])].filter(Boolean).map(x => " · " + String(x).replace(/[<>&"]/g, "")).join("")}</div></div></div>`;
   }).join("");
   // Titel als Text setzen (keine HTML-Einschleusung)
   box.querySelectorAll(".ev .t").forEach((el, i) => el.textContent = list[i].title);
@@ -428,7 +422,7 @@ function refreshAll(){
   cached("water", loadWater, renderWater, $("water"));
   cached("events", loadEvents, renderEvents, $("events"));
   cached("photos", loadPhotos, l => { slides = l; renderPhotos(l); });
-  $("foot").textContent = "Stand " + hm(new Date()) + " · Wetter: Open-Meteo · Wasser: Pegelonline (WSV) · Termine & Bilder: orvo.de";
+  $("foot").textContent = "Stand " + hm(new Date()) + " · Wetter: Open-Meteo · Wasser: Pegelonline (WSV) · Termine: easyVerein · Bilder: orvo.de";
 }
 tick(); setInterval(tick, 1000 * 5);
 renderSun(); setInterval(renderSun, 60 * 1000);
