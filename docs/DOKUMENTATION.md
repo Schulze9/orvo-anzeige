@@ -285,6 +285,9 @@ Pegelonline-Basisadresse: `https://www.pegelonline.wsv.de/webservices/rest-api/v
 | `lat`, `lon` | 53.1375, 8.2240 | Standort für Wetter und Sonnenzeiten |
 | `site` | `https://orvo.de` | WordPress-Seite für die Bilder |
 | `eventsUrl` | `https://schulze9.github.io/orvo-anzeige/events.json` | Woher die Termine geladen werden |
+| `instagramFeed` | leer | JSON-Feed-Adresse von Behold.so; leer = keine Instagram-Bilder. Zum Testen auch per Adresse: `?ig=<Feed-Adresse>` |
+| `instagramPosts` | 12 | Anzahl der Instagram-Beiträge |
+| `imagesPerInstagramPost` | 3 | Höchstzahl Bilder pro Karussell-Beitrag |
 | `posts` | 10 | Anzahl der Beiträge für die Bilderstrecke |
 | `imagesPerPost` | 6 | Höchstzahl Bilder pro Beitrag |
 | `eventDays` | 120 | Wie viele Tage im Voraus Termine angezeigt werden |
@@ -409,6 +412,7 @@ Sie bestimmt, wann es hell genug zum Rudern ist. Die Anzeige zeigt deshalb diese
 
 - [ ] Pi endgültig in den Verein bringen und das Vereins-WLAN im Portal als primäres WLAN eintragen.
 - [ ] Prüfen, ob „Web Page“ im kostenlosen Yodeck-Plan verfügbar ist.
+- [ ] Instagram-Bilder: bei Behold.so ein Konto anlegen, das Instagram-Konto **oldenburger_ruderverein** verbinden (vermutlich professionelles Konto nötig), einen **JSON**-Feed anlegen und die Feed-Adresse als `instagramFeed` in `index.html` eintragen. Danach neu nach orvo.de hochladen. Die Seite ist dafür schon vorbereitet: Sie mischt Instagram-Beiträge nach Datum zwischen die Beiträge von orvo.de, mit „Instagram · Monat Jahr“ als Hinweis.
 - [ ] In Yodeck bei der Web Page die Adresse auf `https://orvo.de/anzeige/` umstellen.
 - [ ] Im Vereinsnetz eine feste IP-Adresse für den Pi vergeben (erleichtert SSH).
 - [ ] Optional: Eilmeldungs-Zeile für kurzfristige Hinweise (z. B. „Training fällt aus“).
