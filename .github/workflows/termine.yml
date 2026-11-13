@@ -1,0 +1,56 @@
+# Holt alle 30 Minuten die Termine aus easyVerein und aktualisiert events.json.
+# Die Abo-Adresse des Kalenders liegt als Repository-Secret EASYVEREIN_ICS vor
+# (Settings → Secrets and variables → Actions).
+name: Termine aus easyVerein
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [tools/easyverein.py, .github/workflows/termine.yml]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: termine
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kalender abrufen
+        env:
+          EASYVEREIN_ICS: ${{ secrets.EASYVEREIN_ICS }}
+        run: |
+          if [ -z "$EASYVEREIN_ICS" ]; then
+            echo "::warning::Secret EASYVEREIN_ICS fehlt – Termine bleiben unverändert."
+            exit 0
+          fi
+          python3 tools/easyverein.py events.json
+
+      - name: Änderungen übernehmen
+        run: |
+          if git diff --quiet -- events.json; then
+            echo "Keine Änderungen."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add events.json
+            git commit -m "Termine aus easyVerein aktualisiert"
+            git push
+          fi
+
+      # GitHub pausiert zeitgesteuerte Workflows nach 60 Tagen ohne Commits.
+      # Das erneute Aktivieren verhindert das, ohne Commits zu erzeugen.
+      - name: Zeitsteuerung aktiv halten
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/termine.yml/enable"
