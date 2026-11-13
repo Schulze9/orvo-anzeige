@@ -150,6 +150,7 @@ const CFG = {
   maxEvents: 6,
   waterTempStation: "eba772d4-509e-4fe7-ba51-d9a29b190432", // Weser, Elsfleth (Wassertemperatur)
   levelStation: "1b51e55e-088a-44c3-a633-b1bee44422d7",     // Hunte, Oldenburg-Drielake (Pegel)
+  eventsUrl: "https://schulze9.github.io/orvo-anzeige/events.json", // Termine aus easyVerein (GitHub Action)
   refreshMinutes: 15,
   reloadHours: 6
 };
@@ -307,7 +308,7 @@ function renderWater(d){
 async function loadEvents(){
   const qf = new URLSearchParams(location.search).get("from");   // nur zum Testen
   const from = qf ? new Date(qf) : new Date(), to = new Date(Date.now() + CFG.eventDays * 864e5);
-  const d = await getJSON("events.json?t=" + Date.now());
+  const d = await getJSON(CFG.eventsUrl + "?t=" + Date.now());
   const list = (d.events || []).map(e => ({...e,
     time: e.allDay ? "00:00:00" : e.begin.slice(11), endtime: e.allDay ? "23:59:59" : e.end.slice(11)}));
   return list.filter(e => e.end.slice(0, 10) >= ymd(from) && e.begin.slice(0, 10) <= ymd(to)).slice(0, CFG.maxEvents);
