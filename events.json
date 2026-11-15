@@ -64,6 +64,24 @@
    "cat": "",
    "res": [],
    "color": ""
+  },
+  {
+   "title": "Tagesfahrt Elsfleth mit Einkehr",
+   "begin": "2027-03-14 08:30:00",
+   "end": "2027-03-14 17:30:00",
+   "allDay": false,
+   "cat": "Wanderfahrten",
+   "res": [],
+   "color": "#2f66f5"
+  },
+  {
+   "title": "Teufelsmoorrallye",
+   "begin": "2027-04-25 07:00:00",
+   "end": "2027-04-25 18:00:00",
+   "allDay": false,
+   "cat": "Wanderfahrten",
+   "res": [],
+   "color": "#2f66f5"
   }
  ]
 }
