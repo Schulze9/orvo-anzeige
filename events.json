@@ -75,10 +75,97 @@
    "color": "#2f66f5"
   },
   {
+   "title": "Obleutelehrgang Wildeshausen",
+   "begin": "2027-04-09 00:00:00",
+   "end": "2027-04-11 23:59:59",
+   "allDay": true,
+   "cat": "",
+   "res": [
+    "Bus"
+   ],
+   "color": ""
+  },
+  {
+   "title": "Bergedorf umd Teufelsmoor Rallye",
+   "begin": "2027-04-24 00:00:00",
+   "end": "2027-04-25 23:59:59",
+   "allDay": true,
+   "cat": "",
+   "res": [
+    "Bus"
+   ],
+   "color": ""
+  },
+  {
+   "title": "Bergedorf und Teufelsmoorrrallye",
+   "begin": "2027-04-24 07:00:00",
+   "end": "2027-04-25 19:00:00",
+   "allDay": false,
+   "cat": "",
+   "res": [
+    "Hänger mittel"
+   ],
+   "color": ""
+  },
+  {
    "title": "Teufelsmoorrallye",
    "begin": "2027-04-25 07:00:00",
    "end": "2027-04-25 18:00:00",
    "allDay": false,
+   "cat": "Wanderfahrten",
+   "res": [],
+   "color": "#2f66f5"
+  },
+  {
+   "title": "EUREGA",
+   "begin": "2027-04-29 00:00:00",
+   "end": "2027-05-02 23:59:59",
+   "allDay": true,
+   "cat": "",
+   "res": [
+    "Hänger mittel",
+    "Bus"
+   ],
+   "color": ""
+  },
+  {
+   "title": "Tagesfahrten im Umland",
+   "begin": "2027-05-03 00:00:00",
+   "end": "2027-05-05 23:59:59",
+   "allDay": true,
+   "cat": "Wanderfahrten",
+   "res": [
+    "Bus"
+   ],
+   "color": "#2f66f5"
+  },
+  {
+   "title": "Gudenaa / Jütland",
+   "begin": "2027-05-06 00:00:00",
+   "end": "2027-05-09 23:59:59",
+   "allDay": true,
+   "cat": "Wanderfahrten",
+   "res": [
+    "Hänger klein"
+   ],
+   "color": "#2f66f5"
+  },
+  {
+   "title": "Gudenaa",
+   "begin": "2027-05-06 08:30:00",
+   "end": "2027-05-09 10:30:00",
+   "allDay": false,
+   "cat": "",
+   "res": [
+    "Bus"
+   ],
+   "color": ""
+  },
+  {
+   "title": "Pfingstfahrt",
+   "begin": "2027-05-14 00:00:00",
+   "end": "2027-05-17 23:59:59",
+   "allDay": true,
    "cat": "Wanderfahrten",
    "res": [],
    "color": "#2f66f5"
