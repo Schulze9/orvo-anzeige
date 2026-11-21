@@ -2,18 +2,6 @@
  "source": "easyVerein",
  "events": [
   {
-   "title": "Langstrecke Dortmund Junioren A",
-   "begin": "2026-11-20 14:00:00",
-   "end": "2026-11-21 21:00:00",
-   "allDay": false,
-   "cat": "",
-   "res": [
-    "Bus",
-    "Hänger klein"
-   ],
-   "color": ""
-  },
-  {
    "title": "LRVN Trainingswochenende",
    "begin": "2026-11-27 14:00:00",
    "end": "2026-11-29 17:00:00",
@@ -166,6 +154,15 @@
    "begin": "2027-05-14 00:00:00",
    "end": "2027-05-17 23:59:59",
    "allDay": true,
+   "cat": "Wanderfahrten",
+   "res": [],
+   "color": "#2f66f5"
+  },
+  {
+   "title": "Kirchboot rudern Buxtehude/Hamburg",
+   "begin": "2027-05-21 16:00:00",
+   "end": "2027-05-23 23:59:00",
+   "allDay": false,
    "cat": "Wanderfahrten",
    "res": [],
    "color": "#2f66f5"
